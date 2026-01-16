@@ -2,7 +2,7 @@
 
 A simple chatbot application powered by Gemini AI with multi-language support (Japanese/English).
 
-**🔗 [Try the Live Demo!](https://vercel.com/taihei-sones-projects/bridge-to-practice-course)**
+**🔗 [Try the Live Demo!](https://bridge2-practice-course.vercel.app/)**
 
 ![Made with Love](https://img.shields.io/badge/Made%20with-Love-red)
 ![Python](https://img.shields.io/badge/Python-3.9+-blue)
