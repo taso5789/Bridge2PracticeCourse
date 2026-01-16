@@ -103,8 +103,16 @@ async def chat(request: ChatRequest):
                     "contents": contents,
                     "generationConfig": {
                         "temperature": 0.7,
-                        "maxOutputTokens": 2048,
-                    }
+                        "maxOutputTokens": 8192,
+                        "topP": 0.95,
+                        "topK": 40
+                    },
+                    "safetySettings": [
+                        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+                    ]
                 }
             )
 
@@ -119,13 +127,30 @@ async def chat(request: ChatRequest):
                 )
 
             result = response.json()
+            print(f"Full API response: {result}")
 
             # レスポンスからテキストを抽出
             if "candidates" in result and len(result["candidates"]) > 0:
                 candidate = result["candidates"][0]
+
+                # finishReasonをチェック
+                finish_reason = candidate.get("finishReason", "UNKNOWN")
+                print(f"Finish reason: {finish_reason}")
+
+                if finish_reason == "SAFETY":
+                    print("Response blocked by safety filters")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Response was blocked by safety filters. Please try rephrasing your question."
+                    )
+
                 if "content" in candidate and "parts" in candidate["content"]:
                     text = candidate["content"]["parts"][0]["text"]
                     print(f"Response received: {len(text)} characters")
+
+                    if finish_reason == "MAX_TOKENS":
+                        print("Warning: Response was truncated due to max tokens limit")
+
                     return ChatResponse(response=text)
 
             raise HTTPException(
