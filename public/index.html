@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🤖 AI チャットボット</h1>
+                    <p class="subtitle">Gemini AI を活用したチャットアプリ</p>
+                </div>
+                <button id="langButton" class="lang-button" aria-label="Language">
+                    EN
+                </button>
+            </div>
+        </header>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <h2>こんにちは！👋</h2>
+                <p>何でもお気軽に質問してください。</p>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <textarea
+                    id="userInput"
+                    placeholder="メッセージを入力..."
+                    rows="1"
+                ></textarea>
+                <button id="sendButton" class="send-button" aria-label="Send message">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

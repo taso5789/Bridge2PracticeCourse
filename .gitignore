@@ -1,0 +1,26 @@
+﻿# Env files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Next.js
+.next/
+out/
+node_modules/
+
+# Vercel
+.vercel
+
+# 講座資料
+material/
+extracted_materials/
