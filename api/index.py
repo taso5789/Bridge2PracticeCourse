@@ -73,13 +73,16 @@ async def chat(request: ChatRequest):
         )
 
     try:
-        # 会話履歴を構築
-        chat_session = model.start_chat(history=[])
-
-        # 会話履歴がある場合は追加（最新10件まで）
-        for msg in request.history[-10:]:
+        # 会話履歴を構築（Gemini API形式に変換）
+        history = []
+        for msg in request.history[-10:]:  # 最新10件まで
             if msg.role == "user":
-                chat_session.send_message(msg.content)
+                history.append({"role": "user", "parts": [msg.content]})
+            elif msg.role == "assistant":
+                history.append({"role": "model", "parts": [msg.content]})
+
+        # チャットセッションを開始
+        chat_session = model.start_chat(history=history)
 
         # 新しいメッセージを送信
         response = chat_session.send_message(request.message)
