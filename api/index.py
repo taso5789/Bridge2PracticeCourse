@@ -43,8 +43,8 @@ try:
         raise ValueError("GEMINI_API_KEY is not set")
 
     genai.configure(api_key=api_key)
-    # Use gemini-pro for stable performance
-    model = genai.GenerativeModel('gemini-pro')
+    # Use gemini-1.5-flash for fast and efficient responses
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
     print("✅ Gemini AI initialized successfully")
 except Exception as e:
@@ -56,7 +56,7 @@ async def root():
     return {
         "message": "AI Chatbot API is running",
         "status": "ok",
-        "ai_model": "Gemini Pro" if model else "Not configured"
+        "ai_model": "Gemini 1.5 Flash" if model else "Not configured"
     }
 
 @app.get("/api/health")
