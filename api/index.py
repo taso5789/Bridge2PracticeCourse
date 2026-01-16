@@ -74,24 +74,34 @@ async def chat(request: ChatRequest):
         )
 
     try:
+        print(f"Received message: {request.message}")
+        print(f"History length: {len(request.history)}")
+
         # 会話履歴を構築（Gemini API形式に変換）
         history = []
-        for msg in request.history[-10:]:  # 最新10件まで
-            if msg.role == "user":
-                history.append({"role": "user", "parts": [msg.content]})
-            elif msg.role == "assistant":
-                history.append({"role": "model", "parts": [msg.content]})
+        if request.history:
+            for msg in request.history[-10:]:  # 最新10件まで
+                if msg.role == "user":
+                    history.append({"role": "user", "parts": [msg.content]})
+                elif msg.role == "assistant":
+                    history.append({"role": "model", "parts": [msg.content]})
+
+        print(f"Formatted history: {len(history)} messages")
 
         # チャットセッションを開始
         chat_session = model.start_chat(history=history)
+        print("Chat session started")
 
         # 新しいメッセージを送信
         response = chat_session.send_message(request.message)
+        print(f"Response received: {len(response.text)} characters")
 
         return ChatResponse(response=response.text)
 
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Error generating response: {str(e)}"
