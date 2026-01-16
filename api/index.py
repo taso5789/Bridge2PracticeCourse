@@ -28,6 +28,7 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[Message]] = []
+    language: Optional[str] = "en"
 
 # レスポンスモデル
 class ChatResponse(BaseModel):
