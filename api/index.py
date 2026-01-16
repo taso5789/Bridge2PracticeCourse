@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 from dotenv import load_dotenv
+import httpx
 
 # 環境変数を読み込み
 load_dotenv()
@@ -34,41 +35,28 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
-# Gemini AIの初期化
-try:
-    import google.generativeai as genai
-
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is not set")
-
-    genai.configure(api_key=api_key)
-    # Use gemini-1.5-flash for fast and efficient responses
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
-    print("✅ Gemini AI initialized successfully")
-except Exception as e:
-    print(f"❌ Error initializing Gemini AI: {e}")
-    model = None
+# Gemini API設定
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 @app.get("/")
 async def root():
     return {
         "message": "AI Chatbot API is running",
         "status": "ok",
-        "ai_model": "Gemini 1.5 Flash" if model else "Not configured"
+        "ai_model": "Gemini 1.5 Flash" if GEMINI_API_KEY else "Not configured"
     }
 
 @app.get("/api/health")
 async def health_check():
     return {
         "status": "healthy",
-        "ai_configured": model is not None
+        "ai_configured": GEMINI_API_KEY is not None
     }
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    if not model:
+    if not GEMINI_API_KEY:
         raise HTTPException(
             status_code=500,
             detail="AI model is not configured. Please set GEMINI_API_KEY environment variable."
@@ -78,27 +66,71 @@ async def chat(request: ChatRequest):
         print(f"Received message: {request.message}")
         print(f"History length: {len(request.history)}")
 
-        # 会話履歴を構築（Gemini API形式に変換）
-        history = []
+        # 会話履歴を構築
+        contents = []
+
+        # 履歴を追加（最新10件まで）
         if request.history:
-            for msg in request.history[-10:]:  # 最新10件まで
+            for msg in request.history[-10:]:
                 if msg.role == "user":
-                    history.append({"role": "user", "parts": [msg.content]})
+                    contents.append({
+                        "role": "user",
+                        "parts": [{"text": msg.content}]
+                    })
                 elif msg.role == "assistant":
-                    history.append({"role": "model", "parts": [msg.content]})
+                    contents.append({
+                        "role": "model",
+                        "parts": [{"text": msg.content}]
+                    })
 
-        print(f"Formatted history: {len(history)} messages")
+        # 新しいメッセージを追加
+        contents.append({
+            "role": "user",
+            "parts": [{"text": request.message}]
+        })
 
-        # チャットセッションを開始
-        chat_session = model.start_chat(history=history)
-        print("Chat session started")
+        print(f"Sending request with {len(contents)} messages")
 
-        # 新しいメッセージを送信
-        response = chat_session.send_message(request.message)
-        print(f"Response received: {len(response.text)} characters")
+        # Gemini APIにリクエスト送信
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+                json={
+                    "contents": contents,
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 2048,
+                    }
+                }
+            )
 
-        return ChatResponse(response=response.text)
+            print(f"API response status: {response.status_code}")
 
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"API error: {error_detail}")
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Gemini API error: {error_detail}"
+                )
+
+            result = response.json()
+
+            # レスポンスからテキストを抽出
+            if "candidates" in result and len(result["candidates"]) > 0:
+                candidate = result["candidates"][0]
+                if "content" in candidate and "parts" in candidate["content"]:
+                    text = candidate["content"]["parts"][0]["text"]
+                    print(f"Response received: {len(text)} characters")
+                    return ChatResponse(response=text)
+
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid response format from Gemini API"
+            )
+
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
         import traceback
