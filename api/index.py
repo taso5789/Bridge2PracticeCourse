@@ -37,14 +37,14 @@ class ChatResponse(BaseModel):
 
 # Gemini API設定
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
 
 @app.get("/")
 async def root():
     return {
         "message": "AI Chatbot API is running",
         "status": "ok",
-        "ai_model": "Gemini 1.5 Flash" if GEMINI_API_KEY else "Not configured"
+        "ai_model": "Gemini Pro" if GEMINI_API_KEY else "Not configured"
     }
 
 @app.get("/api/health")
