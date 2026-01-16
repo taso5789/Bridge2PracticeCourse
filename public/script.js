@@ -98,7 +98,11 @@ async function sendMessage() {
         });
 
         if (!response.ok) {
-            throw new Error('APIリクエストに失敗しました');
+            // APIからのエラーメッセージを取得
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.detail || `HTTP Error ${response.status}`;
+            console.error('API Error:', errorMessage);
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -118,7 +122,11 @@ async function sendMessage() {
     } catch (error) {
         console.error('Error:', error);
         hideTypingIndicator();
-        addMessage(t('errorMessage'), false);
+
+        // エラーメッセージをコンソールとUIに表示
+        const errorMsg = error.message || t('errorMessage');
+        console.error('Detailed error:', errorMsg);
+        addMessage(t('errorMessage') + '\n\n' + errorMsg, false);
     } finally {
         // 送信ボタンを有効化
         sendButton.disabled = false;
